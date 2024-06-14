@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  web:
+    image: nginx:latest
+    container_name: web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      my_network:
+        ipv4_address: 10.10.10.2
+
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      my_network:
+        aliases:
+          - new_db
+          - dev_db
+        ipv4_address: 10.10.10.3
+
+volumes:
+  db_data:
+
+networks:
+  my_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/28
