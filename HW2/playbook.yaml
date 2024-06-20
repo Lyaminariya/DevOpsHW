@@ -1,0 +1,49 @@
+---
+- name: Настройка сервера
+  hosts: all
+  become: true
+  vars:
+    username: "sergey"
+    ssh_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    opt_directory: "/opt/newdir"
+
+  tasks:
+    - name: Создание пользователя
+      user:
+        name: "{{ username }}"
+        state: present
+        create_home: yes
+
+    - name: Создание .ssh директории
+      file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0700'
+
+    - name: Добавление SSH ключа в authorized_keys
+      authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ ssh_pub_key }}"
+
+    - name: Отключение авторизации по паролю
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Перезапуск SSH службы
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Создание директории в /opt/
+      file:
+        path: "{{ opt_directory }}"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0755'
