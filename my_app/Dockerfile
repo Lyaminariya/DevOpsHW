@@ -1,13 +1,20 @@
-# Этап сборки зависимостей
-FROM python:3.9-slim as builder
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt
+FROM python:3.9-slim as build
 
-# Этап сборки приложения
-FROM python:3.9-slim
 WORKDIR /app
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
-CMD ["python", "app.py"]
+
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY --from=build /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=build /app /app
+
+EXPOSE 5000
+
+ENTRYPOINT ["python"]
+CMD ["app.py"]
